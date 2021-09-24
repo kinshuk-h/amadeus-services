@@ -102,3 +102,94 @@
 .flight-duration {
     font-size: 0.8rem;
 }
+
+.travel-classes .column {
+    padding: 0;
+}
+.travel-classes .column:not(:last-child) {
+    padding-right: 0.25rem;
+}
+
+.first-class, .business-class, .economy-class {
+    text-align: center;
+    color: white;
+    font-weight: 700;
+    /* line-height: 1.125; */
+    word-break: break-word;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+.economy-class {
+    background-color: #c5012d;
+}
+.business-class {
+    background-color: #133b78;
+}
+.first-class {
+    background-color: #502778;
+}
+
+.columns.flight-prices > *.column:not(:last-child) {
+    border-right: 1px solid black;
+}
+.columns.flight-prices > *.column:not(:first-child) {
+    border-left: 1px solid black;
+}
+
+.modal-content .card-header {
+    padding: 1rem;
+}
+.modal-content .card-content {
+    padding: 0;
+}
+
+.main-segment {
+    margin: 0 !important;
+    padding: 1rem;
+}
+.layover-segment {
+    border-bottom: 1px solid #ddd;
+    background-color: #efefef;
+    padding: 1rem;
+}
+.main-segment:not(:last-child) {
+    border-bottom: 1px solid #ddd;
+}
+
+.fare-segment {
+    margin: 0 !important;
+    padding: 1rem;
+}
+.fare-segment .column {
+    display: flex;
+    padding-top: 0;
+    padding-bottom: 0;
+    align-items: center;
+    justify-content: space-between;
+}
+.fare-segment .column:not(:first-child) {
+    margin-top: 0.5rem;
+}
+.fare-segment .column.total {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-top: 1px solid #ababab;
+    border-bottom: 1px solid #ababab;
+}
+.fare-segment .column .title {
+    margin-bottom: 0;
+}
+
+@media only screen and (max-width: 570px) {
+    .travel-classes .column:not(:last-child) {
+        padding-right: 0;
+    }
+    .columns.flight-prices > *.column:not(:last-child) {
+        border-bottom: 1px solid black;
+        border-right: 0;
+    }
+    .columns.flight-prices > *.column:not(:first-child) {
+        border-top: 1px solid black;
+        border-left: 0;
+    }
+}

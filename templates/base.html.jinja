@@ -38,7 +38,7 @@
         {% block main %}
         <article class="container is-fluid">
             <article class="columns is-vcentered is-centered">
-                <section class="column is-half is-one-quarter-desktop">
+                <section class="column is-half is-one-quarter-widescreen">
                     {% block top_content %}
                     <section class="hero is-medium">
                         <div class="hero-body">
@@ -51,7 +51,7 @@
                     </section>
                     {% endblock top_content %}
                 </section>
-                <section class="column is-half is-one-quarter-desktop">
+                <section class="column is-half is-one-quarter-widescreen">
                     <form class="box" action="/flights">
                         <div class="field">
                             <label class="label">From</label>
@@ -190,6 +190,7 @@
 
         <!-- Custom JS Scripts -->
         <script src="/static/scripts/index.js"></script>
+        {% block scripts_block %}{% endblock scripts_block %}
         {% endblock main %}
     </body>
 </html>

@@ -46,52 +46,54 @@ def index():
 @app.route("/flights/")
 @app.route("/flights/<sort_by>")
 def flights(sort_by = "price-wise"):
-    # if "from" in flask.request.args:
-    #     params = {
-    #         "originLocationCode"     : flask.request.args["from"],
-    #         "destinationLocationCode": flask.request.args["to"],
-    #         "departureDate"          : flask.request.args["depart_on"],
-    #         "adults"                 : flask.request.args.get("adults", 1),
-    #         "children"               : flask.request.args.get("children", 0),
-    #         "infants"                : flask.request.args.get("infants", 0),
-    #         "travelClass"            : flask.request.args.get("class", "ECONOMY"),
-    #         "currencyCode"           : "INR",
-    #         "max"                    : 20
-    #     }
-    #     if "return_on" in flask.request.args:
-    #         params |= { "returnDate": flask.request.args["return_on"] }
-    #     flask.session["params"] = params | {
-    #         "originLocation"     : flask.request.args["from_location"],
-    #         "destinationLocation": flask.request.args["to_location"],
-    #     }
-    #     flask.session["flights"] = client.shopping.flight_offers_search.get(**params).result
-    #     return flask.redirect(flask.request.path)
+    if "from" in flask.request.args:
+        params = {
+            "originLocationCode"     : flask.request.args["from"],
+            "destinationLocationCode": flask.request.args["to"],
+            "departureDate"          : flask.request.args["depart_on"],
+            "adults"                 : flask.request.args.get("adults", 1),
+            "children"               : flask.request.args.get("children", 0),
+            "infants"                : flask.request.args.get("infants", 0),
+            "travelClass"            : flask.request.args.get("class", "ECONOMY"),
+            "currencyCode"           : "INR"
+        }
+        if "return_on" in flask.request.args:
+            params |= { "returnDate": flask.request.args["return_on"] }
+        flask.session["params"] = params | {
+            "originLocation"     : flask.request.args["from_location"],
+            "destinationLocation": flask.request.args["to_location"],
+        }
+        flask.session["flights"] = str(uuid4())
+        FLIGHT_CHARTS[flask.session["flights"]] = client.shopping.flight_offers_search.get(**params).result
+        return flask.redirect(flask.request.path)
 
-    params = {
-        "originLocationCode"     : "DEL",
-        "destinationLocationCode": "FRA",
-        "departureDate"          : "2021-09-21",
-        "returnDate"             : "2021-09-26",
-        "adults"                 : 1,
-        "children"               : 0,
-        "infants"                : 0,
-        "travelClass"            : "ECONOMY",
-        "currencyCode"           : "INR",
-        "max"                    : 20
-    }
-    flask.session["params"] = params | {
-        "originLocation"     : "DEL, Indira Gandhi Intl Airport - Delhi",
-        "destinationLocation": "FRA, Frankfurt Intl Airport - Frankfurt",
-    }
-    with open("static/assets/flight_offers_del_fra.json", "r+") as file:
-        flask.session["flights"] = json.load(file)
+    # params = {
+    #     "originLocationCode"     : "DEL",
+    #     "destinationLocationCode": "FRA",
+    #     "departureDate"          : "2021-09-21",
+    #     "returnDate"             : "2021-09-26",
+    #     "adults"                 : 1,
+    #     "children"               : 0,
+    #     "infants"                : 0,
+    #     "travelClass"            : "ECONOMY",
+    #     "currencyCode"           : "INR",
+    #     "max"                    : 20
+    # }
+    # flask.session["params"] = params | {
+    #     "originLocation"     : "DEL, Indira Gandhi Intl Airport - Delhi",
+    #     "destinationLocation": "FRA, Frankfurt Intl Airport - Frankfurt",
+    # }
+    # with open("static/assets/flight_offers_del_fra.json", "r+") as file:
+    #     offers = json.load(file)
+    #     offers["data"] = utils.unique_objects(offers["data"])
+    #     flask.session["flights"] = offers
 
     origin      = flask.session['params']['originLocationCode']
     destination = flask.session['params']['destinationLocationCode']
     return flask.render_template(
         "flights.html.jinja",
-        params = flask.session["params"], flights = flask.session["flights"],
-        flightsjson = json.dumps(flask.session["flights"]["data"][0], indent = 4, ensure_ascii=False),
+        params = flask.session["params"],
+        flights = FLIGHT_CHARTS[flask.session["flights"]],
         title = f"Cheapest flights from {origin} to {destination}",
         today = datetime.now().strftime("%Y-%m-%d")
     )

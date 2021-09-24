@@ -54,3 +54,14 @@ class Duration:
         result = result.replace("%M", f"{self.minutes}m" if self.minutes else '')
         result = result.replace("%s", f"{self.seconds}s" if self.seconds else '')
         return result
+
+def unique_objects(objects):
+    """ Returns unique dictionary objects from a collection of dictionaries.
+        Individual dictionaries must be serializable. """
+    hashes = set(); unique = []
+    for object in objects:
+        hash = str(object)
+        if hash not in hashes:
+            hashes.add(hash)
+            unique.append(object)
+    return unique
