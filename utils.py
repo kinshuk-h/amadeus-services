@@ -1,6 +1,38 @@
+import isodate
 import requests
 
 from bs4 import BeautifulSoup
+
+OFFER_SORT_KEYS = {
+    "price-wise": lambda f: float(f["price"]["grandTotal"]),
+    "duration-wise": lambda f: (
+        isodate.parse_duration(f["itineraries"][0]["duration"]).total_seconds(),
+        isodate.parse_duration(f["itineraries"][1]["duration"]).total_seconds() if len(f["itineraries"]) > 1 else 0,
+        float(f["price"]["grandTotal"])
+    ),
+    "air-india": lambda f: (
+        1 if any(segment["carrierCode"]=="AI" for segment in f["itineraries"][0]["segments"]) else 2,
+        1 if len(f["itineraries"]) > 1 and \
+            any(segment["carrierCode"]=="AI" for segment in f["itineraries"][1]["segments"]) else 2,
+        float(f["price"]["grandTotal"])
+    ),
+    "stop-count": lambda f: (
+        len(f["itineraries"][0]["segments"]),
+        len(f["itineraries"][1]["segments"]) if len(f["itineraries"]) > 1 else 0,
+        float(f["price"]["grandTotal"])
+    ),
+}
+
+OFFER_SORT_KEY_NAMES = {
+    "price-wise-asc"    : "Fare - Low to High",
+    "price-wise-desc"   : "Fare - High to Low",
+    "duration-wise-asc" : "Duration - Shorter to Longer",
+    "duration-wise-desc": "Duration - Longer to Shorter",
+    "stop-count-asc"    : "Number of Stops - Low to High",
+    "stop-count-desc"   : "Number of Stops - High to Low",
+    "air-india-asc"     : "Air India Flights as a carrier",
+    "air-india-desc"    : "Without Air India Flights as a carrier",
+}
 
 def get_airport_codes(query):
     response = requests.get("https://www.iata.org/en/publications/directories/code-search/",
@@ -54,14 +86,3 @@ class Duration:
         result = result.replace("%M", f"{self.minutes}m" if self.minutes else '')
         result = result.replace("%s", f"{self.seconds}s" if self.seconds else '')
         return result
-
-def unique_objects(objects):
-    """ Returns unique dictionary objects from a collection of dictionaries.
-        Individual dictionaries must be serializable. """
-    hashes = set(); unique = []
-    for object in objects:
-        hash = str(object)
-        if hash not in hashes:
-            hashes.add(hash)
-            unique.append(object)
-    return unique

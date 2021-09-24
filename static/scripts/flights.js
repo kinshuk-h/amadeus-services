@@ -22,4 +22,17 @@ document.addEventListener("DOMContentLoaded", () => {
             modal.classList.add("is-active");
         })
     });
+
+    if(window.location.search.includes("page")) {
+        const notification = document.getElementById("success-notification");
+        window.scroll({
+            block: "start", behavior: "smooth", inline: "center",
+            top: notification.getBoundingClientRect().top - 40
+        });
+    }
+
+    const dropdown = document.querySelector("#sort_dropdown");
+    dropdown.querySelector(".dropdown-trigger").addEventListener("mousedown", () => {
+        dropdown.classList.toggle("is-active");
+    });
 });

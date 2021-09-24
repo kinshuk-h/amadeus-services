@@ -64,6 +64,7 @@
     position: relative;
 }
 .carrier::before {
+    cursor: help;
     display: block;
     content: "✈";
     font-size: 1.5rem;
@@ -178,6 +179,16 @@
 }
 .fare-segment .column .title {
     margin-bottom: 0;
+}
+
+.highlight-cell {
+    border: 1px solid rgba(255, 136, 0, 0.8);
+    background-color: rgb(252, 247, 239);
+    border-radius: 10px;
+    color: rgb(255, 136, 0);
+    padding: 0.25rem;
+    line-height: 1.5;
+    font-size: 0.75rem;
 }
 
 @media only screen and (max-width: 570px) {

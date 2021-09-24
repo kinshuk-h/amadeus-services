@@ -1,3 +1,4 @@
+import os
 import ssl
 import json
 import urllib.request
@@ -11,8 +12,10 @@ import amadeus
 
 import utils
 
-FLIGHT_CHARTS = {}
-AIRPORTS = {}
+flight_searches = {}
+locations       = {}
+
+DEBUG_MODE      = os.environ.get("FLASK_ENV", "development") == "development"
 
 def ssl_disabled_urlopen(endpoint):
     context = ssl._create_unverified_context()
@@ -30,7 +33,10 @@ def parse_datetime(datetimestr):
     return isodate.parse_datetime(datetimestr)
 @app.template_filter()
 def format_duration(delta, fmtstr):
-    return fmtstr.format(utils.Duration(int(delta.total_seconds())))
+    return f"{utils.Duration(int(delta.total_seconds())):{fmtstr}}"
+@app.template_filter()
+def strptime(timestampstr, formatstr):
+    return datetime.strptime(timestampstr, formatstr)
 @app.template_filter()
 def strftime(timestamp, formatstr):
     return timestamp.strftime(formatstr)
@@ -45,7 +51,7 @@ def index():
 
 @app.route("/flights/")
 @app.route("/flights/<sort_by>")
-def flights(sort_by = "price-wise"):
+def flights(sort_by = "price-wise-asc"):
     if "from" in flask.request.args:
         params = {
             "originLocationCode"     : flask.request.args["from"],
@@ -55,48 +61,58 @@ def flights(sort_by = "price-wise"):
             "children"               : flask.request.args.get("children", 0),
             "infants"                : flask.request.args.get("infants", 0),
             "travelClass"            : flask.request.args.get("class", "ECONOMY"),
-            "currencyCode"           : "INR"
+            "currencyCode"           : "INR",
+            # "includedAirlineCodes"   : "AI"
         }
         if "return_on" in flask.request.args:
             params |= { "returnDate": flask.request.args["return_on"] }
+
         flask.session["params"] = params | {
             "originLocation"     : flask.request.args["from_location"],
             "destinationLocation": flask.request.args["to_location"],
         }
-        flask.session["flights"] = str(uuid4())
-        FLIGHT_CHARTS[flask.session["flights"]] = client.shopping.flight_offers_search.get(**params).result
+        flask.session["flights_search_token"] = str(uuid4())
+
+        flight_offers = client.shopping.flight_offers_search.get(**params).result
+        for airportCode, location in flight_offers["dictionaries"]["locations"].items():
+            if airportCode not in locations:
+                try:
+                    airport = client.reference_data.location(f"A{airportCode}").get().data
+                    flight_offers["dictionaries"]["locations"][airportCode]["airportName"] = airport["name"]
+                except amadeus.ResponseError:
+                    pass
+                try:
+                    city = client.reference_data.location(f"C{location['cityCode']}").get().data
+                    flight_offers["dictionaries"]["locations"][airportCode] |= city["address"]
+                except amadeus.ResponseError:
+                    pass
+                locations[airportCode] = flight_offers["dictionaries"]["locations"][airportCode]
+        flight_searches[flask.session["flights_search_token"]] = flight_offers
+
+        # if DEBUG_MODE:
+        #     with open(os.path.join("usr", flask.session["flights_search_token"]+".json"), "w+", encoding="utf-8") as file:
+        #         json.dump(flight_searches[flask.session["flights_search_token"]], file, indent=4, ensure_ascii=False)
+
         return flask.redirect(flask.request.path)
-
-    # params = {
-    #     "originLocationCode"     : "DEL",
-    #     "destinationLocationCode": "FRA",
-    #     "departureDate"          : "2021-09-21",
-    #     "returnDate"             : "2021-09-26",
-    #     "adults"                 : 1,
-    #     "children"               : 0,
-    #     "infants"                : 0,
-    #     "travelClass"            : "ECONOMY",
-    #     "currencyCode"           : "INR",
-    #     "max"                    : 20
-    # }
-    # flask.session["params"] = params | {
-    #     "originLocation"     : "DEL, Indira Gandhi Intl Airport - Delhi",
-    #     "destinationLocation": "FRA, Frankfurt Intl Airport - Frankfurt",
-    # }
-    # with open("static/assets/flight_offers_del_fra.json", "r+") as file:
-    #     offers = json.load(file)
-    #     offers["data"] = utils.unique_objects(offers["data"])
-    #     flask.session["flights"] = offers
-
-    origin      = flask.session['params']['originLocationCode']
-    destination = flask.session['params']['destinationLocationCode']
-    return flask.render_template(
-        "flights.html.jinja",
-        params = flask.session["params"],
-        flights = FLIGHT_CHARTS[flask.session["flights"]],
-        title = f"Cheapest flights from {origin} to {destination}",
-        today = datetime.now().strftime("%Y-%m-%d")
-    )
+    elif "flights_search_token" in flask.session:
+        origin      = flask.session['params']['originLocationCode']
+        destination = flask.session['params']['destinationLocationCode']
+        sort_key    = utils.OFFER_SORT_KEYS[sort_by.replace("-asc", "").replace("-desc", "")]
+        return flask.render_template(
+            "flights.html.jinja",
+            params = flask.session["params"],
+            flights = sorted(
+                flight_searches[flask.session["flights_search_token"]]["data"],
+                key = sort_key, reverse="desc" in sort_by
+            ),
+            locations = locations, sort_keys = utils.OFFER_SORT_KEY_NAMES,
+            carriers = flight_searches[flask.session["flights_search_token"]]["dictionaries"]["carriers"],
+            aircrafts = flight_searches[flask.session["flights_search_token"]]["dictionaries"]["aircraft"],
+            title = f"Cheapest flights from {origin} to {destination}",
+            today = datetime.now().strftime("%Y-%m-%d")
+        )
+    else:
+        return flask.redirect("/")
 
 @app.route("/airlinecodes/")
 def airlinecodes():
