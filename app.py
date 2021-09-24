@@ -22,7 +22,7 @@ def ssl_disabled_urlopen(endpoint):
     return urllib.request.urlopen(endpoint, context=context)
 
 app = flask.Flask(__name__)
-app.secret_key = "Something dangerous..."
+app.secret_key = uuid4().bytes
 client = amadeus.Client(http = ssl_disabled_urlopen)
 
 @app.template_filter()
@@ -94,25 +94,25 @@ def flights(sort_by = "price-wise-asc"):
         #         json.dump(flight_searches[flask.session["flights_search_token"]], file, indent=4, ensure_ascii=False)
 
         return flask.redirect(flask.request.path)
-    # elif "flights_search_token" in flask.session:
-    origin      = flask.session['params']['originLocationCode']
-    destination = flask.session['params']['destinationLocationCode']
-    sort_key    = utils.OFFER_SORT_KEYS[sort_by.replace("-asc", "").replace("-desc", "")]
-    return flask.render_template(
-        "flights.html.jinja",
-        params = flask.session["params"],
-        flights = sorted(
-            flight_searches[flask.session["flights_search_token"]]["data"],
-            key = sort_key, reverse="desc" in sort_by
-        ),
-        locations = locations, sort_keys = utils.OFFER_SORT_KEY_NAMES,
-        carriers = flight_searches[flask.session["flights_search_token"]]["dictionaries"]["carriers"],
-        aircrafts = flight_searches[flask.session["flights_search_token"]]["dictionaries"]["aircraft"],
-        title = f"Cheapest flights from {origin} to {destination}",
-        today = datetime.now().strftime("%Y-%m-%d")
-    )
-    # else:
-    #     return flask.redirect("/")
+    elif "flights_search_token" in flask.session:
+        origin      = flask.session['params']['originLocationCode']
+        destination = flask.session['params']['destinationLocationCode']
+        sort_key    = utils.OFFER_SORT_KEYS[sort_by.replace("-asc", "").replace("-desc", "")]
+        return flask.render_template(
+            "flights.html.jinja",
+            params = flask.session["params"],
+            flights = sorted(
+                flight_searches[flask.session["flights_search_token"]]["data"],
+                key = sort_key, reverse="desc" in sort_by
+            ),
+            locations = locations, sort_keys = utils.OFFER_SORT_KEY_NAMES,
+            carriers = flight_searches[flask.session["flights_search_token"]]["dictionaries"]["carriers"],
+            aircrafts = flight_searches[flask.session["flights_search_token"]]["dictionaries"]["aircraft"],
+            title = f"Cheapest flights from {origin} to {destination}",
+            today = datetime.now().strftime("%Y-%m-%d")
+        )
+    else:
+        return flask.redirect("/")
 
 @app.route("/airlinecodes/")
 def airlinecodes():
