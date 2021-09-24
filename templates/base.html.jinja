@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- 3rd-Party CSS Scripts -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+              integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+              crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/dist/css/bulma-extensions.min.css">
+        <!-- Custom CSS Scripts -->
+        <link rel="stylesheet" href="/static/css/style.base.css">
+        {% block css_block %}{% endblock css_block %}
+        <title>{{ title }} - Amadeus Services</title>
+    </head>
+    <body>
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/">
+                    <img src="/static/assets/images/Amadeus_(CRS)_Logo.svg">
+                </a>
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="main_navbar">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+            <section id="main_navbar" class="navbar-menu">
+                <ul class="navbar-end">
+                    <!-- TODO: Implement Navbar Tabs. -->
+                    <li class="navbar-item">Flights</li>
+                    <li class="navbar-item">More</li>
+                </ul>
+            </section>
+        </nav>
+
+        {% block main %}
+        <article class="container is-fluid">
+            <article class="columns is-vcentered is-centered">
+                <section class="column is-half is-one-quarter-desktop">
+                    {% block top_content %}
+                    <section class="hero is-medium">
+                        <div class="hero-body">
+                            <p class="title is-spaced">Your search ends here.</p>
+                            <p class="subtitle">
+                                Book the cheapest flights.
+                                Powered by Amadeus&reg;.
+                            </p>
+                        </div>
+                    </section>
+                    {% endblock top_content %}
+                </section>
+                <section class="column is-half is-one-quarter-desktop">
+                    <form class="box" action="/flights">
+                        <div class="field">
+                            <label class="label">From</label>
+                            <div class="control is-expanded has-icons-right">
+                                <section class="dropdown is-fullwidth">
+                                    <div class="dropdown-trigger">
+                                        <input aria-haspopup="true" aria-controls="from_dropdown_menu"
+                                                class="input" type="text" placeholder="Going From"
+                                                data-target="from_location" name="from_location"
+                                                {% if params is defined %}
+                                                    value="{{- params.originLocation -}}"
+                                                {% endif %}
+                                                required>
+                                        <span class="icon is-small is-right">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </span>
+                                    </div>
+                                    <div id="from_dropdown_menu" class="dropdown-menu" role="menu">
+                                        <div class="dropdown-content"></div>
+                                    </div>
+                                </section>
+                                <input id="from_location" name="from" hidden
+                                    {% if params is defined %}
+                                        value="{{- params.originLocationCode -}}"
+                                    {% endif %}>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label class="label">To</label>
+                            <div class="control is-expanded has-icons-right">
+                                <section class="dropdown is-fullwidth">
+                                    <div class="dropdown-trigger">
+                                        <input aria-haspopup="true" aria-controls="to_dropdown_menu"
+                                               class="input" type="text" placeholder="Going To"
+                                               data-target="to_location"  name="to_location"
+                                               {% if params is defined %}
+                                                    value="{{- params.destinationLocation -}}"
+                                                {% endif %}
+                                               required>
+                                        <span class="icon is-small is-right">
+                                            <i class="fa fa-chevron-down"></i>
+                                        </span>
+                                    </div>
+                                    <div id="to_dropdown_menu" class="dropdown-menu" role="menu">
+                                        <div class="dropdown-content"></div>
+                                    </div>
+                                </section>
+                                <input id="to_location" name="to" hidden
+                                    {% if params is defined %}
+                                        value="{{- params.destinationLocationCode -}}"
+                                    {% endif %}>
+                            </div>
+                        </div>
+                        <div class="field my-5">
+                            <p class="control">
+                                <input class="switch is-link" id="one_way" type="checkbox"
+                                        {% if (params is defined and "returnDate" not in params) %}
+                                            checked
+                                        {% endif %}>
+                                <label for="one_way">One-Way Journey</label>
+                            </p>
+                        </div>
+                        <div class="field is-grouped is-grouped-multiline">
+                            <div class="control is-expanded">
+                                <label class="label">Depart On</label>
+                                <div class="control is-expanded">
+                                    <input class="input" type="date" name="depart_on"
+                                            min="{{- today -}}"
+                                            {% if params is defined %}
+                                                value="{{- params.departureDate -}}"
+                                            {% else %}
+                                                value="{{- today -}}"
+                                            {% endif %}
+                                            required>
+                                </div>
+                            </div>
+                            <div class="control is-expanded">
+                                <label class="label">Return On</label>
+                                <div class="control is-expanded">
+                                    <input class="input" type="date" name="return_on" min="{{ today }}"
+                                            {% if params is defined %}
+                                                {% if "returnDate" in params %}
+                                                    value="{{- params.returnDate -}}"
+                                                    required
+                                                {% else %}
+                                                    disabled
+                                                {% endif %}
+                                            {% else %}
+                                                required
+                                            {% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field is-grouped is-grouped-centered pt-4">
+                            <div class="control">
+                                {# <input class="button" type="submit" value="Search Flights"> #}
+                                <button class="button is-link">
+                                    <span class="icon is-small is-left">
+                                        <i class="fa fa-plane"></i>
+                                    </span>
+                                    <span>Search Flights</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+            </article>
+            {% block flights_block %}{% endblock flights_block %}
+        </article>
+
+        <!-- Templates for dynamic element generation. -->
+        <template id="dropdown_element_template">
+            <div class="dropdown-item clickable">
+                <p name="city" class="title is-6 in-dropdown">City Name, Country Name</p>
+                <p>
+                    <span name="code" class="tag">ICD</span>
+                    <span name="airport" class="subtitle is-7">Airport Name</span>
+                </p>
+            </div>
+        </template>
+        <template id="dropdown_divider">
+            <div class="dropdown-divider"></div>
+        </template>
+        <template id="dropdown_progress_item">
+            <div class="dropdown-item">
+                <div class="block p-4">
+                    <div class="large block with-progress"></div>
+                </div>
+            </div>
+        </template>
+        <template id="error_item_template">
+            <div class="dropdown-item">
+                <span id="message" class="has-text-danger-dark">Error Message</span>
+            </div>
+        </template>
+
+        <!-- Custom JS Scripts -->
+        <script src="/static/scripts/index.js"></script>
+        {% endblock main %}
+    </body>
+</html>

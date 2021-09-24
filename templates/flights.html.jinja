@@ -1,0 +1,208 @@
+{% extends "base.html.jinja" %}
+{% block css_block %}
+    <link rel="stylesheet" href="/static/css/style.flights.css">
+{% endblock css_block %}
+{% block flights_block %}
+    <article class="container block">
+        <section class="notification is-info is-light">
+            <div class="field is-grouped is-grouped-multiline">
+                <p class="control is-expanded">
+                    <input class="input is-static" type="text"
+                            value="Found {{ flights.data | length }} flight offers. Sort by:">
+                </p>
+                <p class="control">
+                    <div class="dropdown">
+                <div class="dropdown-trigger">
+                    <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+                        <span id="sort-order">Price - Low to High</span>
+                        <span class="icon is-small">
+                            <i class="fas fa-angle-down" aria-hidden="true"></i>
+                        </span>
+                    </button>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content">
+                    <a href="/flights/price-wise-asc" class="dropdown-item">
+                        Dropdown item
+                    </a>
+                    <a class="dropdown-item">
+                        Other dropdown item
+                    </a>
+                    <a href="#" class="dropdown-item is-active">
+                        Active dropdown item
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        Other dropdown item
+                    </a>
+                    <hr class="dropdown-divider">
+                    <a href="#" class="dropdown-item">
+                        With a divider
+                    </a>
+                    </div>
+                </div>
+                </div>
+                </p>
+            </div>
+        </section>
+    </article>
+    <article class="container block">
+        <section class="section is-primary">
+            <div class="columns">
+                <div class="column is-narrow is-one-quarter-mobile">
+                    <button class="button is-medium unclickable circular">
+                        <span class="icon is-small">
+                            <i class="fa fa-plane-departure"></i>
+                        </span>
+                    </button>
+                </div>
+                <div class="column is-narrow">
+                    <p class="title normal">
+                        <strong class="smallcaps">
+                            {{- params.originLocation[params.originLocation.index("- ")+2:] }}
+                        </strong>
+                        to
+                        <strong class="smallcaps">
+                            {{ params.destinationLocation[params.destinationLocation.index("- ")+2:] -}}
+                        </strong>
+                    </p>
+                    <p class="subtitle is-6">
+                        Departure, on {{ params.departureDate -}}
+                    </p>
+                </div>
+            </div>
+        </section>
+            {% set flight = flights.data[0] %}
+            {# {% for flight in flights.data %} #}
+                <section class="card block">
+                    <div class="card-content">
+                        {% set itinerary = flight.itineraries[0] %}
+                        <div class="columns is-desktop">
+                            <div class="column is-half-desktop">
+                                <p class="block evenly-spaced">
+                                    <span class="flight-duration">
+                                        {{ itinerary.duration | parse_duration | format_duration("{:%t}") }}
+                                    </span>
+                                </p>
+                                <div class="block evenly-spaced">
+                                    {% set departure = itinerary.segments[0].departure.at | parse_datetime %}
+                                    {% set arrival = itinerary.segments[-1].arrival.at | parse_datetime %}
+                                    <span class="flight-time">
+                                        {{ departure | strftime("%H:%M") }}
+                                    </span>
+                                    <span>
+
+                                        <span class="flight-time">
+                                            {{ arrival | strftime("%H:%M") -}}
+                                        </span>
+                                        <span class="flight-time is-small">
+                                            {% set days = arrival.day - departure.day %}
+                                            {{- "({:+})".format(days) if days != 0 else "" }}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="flight-path block">
+                                    <div class="stop">
+                                        <span>{{ itinerary.segments[0].departure.iataCode }}</span>
+                                    </div>
+                                    {% for segment in itinerary.segments %}
+                                        <div class="carrier">
+                                            <span>
+                                                {{- segment.carrierCode }}
+                                                {{ segment.number }}<br>
+                                                ({{ flights.dictionaries.carriers[segment.carrierCode] | title -}})
+                                            </span>
+                                        </div>
+                                        <div class="stop">
+                                            <span>{{ segment.arrival.iataCode }}</span>
+                                            {% if loop.nextitem is defined %}
+                                                {% set next_dep = loop.nextitem.departure.at | parse_datetime %}
+                                                {% set prev_arr = segment.arrival.at | parse_datetime %}
+                                                <span class="is-uppercase has-small-text">
+                                                    {{ (next_dep - prev_arr) | format_duration("{:%H %M}") }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        {% set prev_segment = segment %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="column">
+                                <p class="block">
+                                    <span class="title is-4">{{ params.travelClass }}</span>
+                                </p>
+                                <p class="block is-vcentered">
+                                    <span class="subtitle is-6">{{- flight.price.currency }}</span>
+                                    <span class="title is-4">{{ "{:,.0f}".format(flight.price.grandTotal|float) -}}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            {# {% endfor %} #}
+    </article>
+{% if "returnDate" in params or flights.data[0].itineraries|length > 1 %}
+    <article class="container block">
+        <section class="section is-primary">
+            <div class="columns">
+                <div class="column is-narrow">
+                    <button class="button is-medium unclickable circular">
+                        <span class="icon is-small">
+                            <i class="fa fa-plane-departure fa-flip-horizontal"></i>
+                        </span>
+                    </button>
+                </div>
+                <div class="column is-narrow">
+                    <p class="title normal">
+                        <strong class="smallcaps">
+                            {{ params.destinationLocation[params.destinationLocation.index("- ")+2:] -}}
+                        </strong>
+                        to
+                        <strong class="smallcaps">
+                            {{- params.originLocation[params.originLocation.index("- ")+2:] }}
+                        </strong>
+                    </p>
+                    <p class="subtitle is-6">
+                        Return, on {{ params.returnDate -}}
+                    </p>
+                </div>
+            </div>
+        </section>
+        {% set flight = flights.data[0] %}
+        <section class="card">
+            <div class="card-content">
+                {% set itinerary = flight.itineraries[1] %}
+                <div class="columns">
+                    <div class="column is-half">
+                        <div class="flight-path">
+                            <div class="stop">
+                                <span>{{ itinerary.segments[0].departure.iataCode }}</span>
+                            </div>
+                            {% for segment in itinerary.segments %}
+                            <div class="carrier">
+                                <span>
+                                    {{- segment.carrierCode }}
+                                    {{ segment.number }}<br>
+                                    ({{ flights.dictionaries.carriers[segment.carrierCode] | title -}})
+                                </span>
+                            </div>
+                            <div class="stop">
+                                <span>{{ segment.arrival.iataCode }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="column">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </article>
+{% endif %}
+    <section class="box">
+        <div class="notification is-primary">
+            <pre style="overflow-y: none;">
+                {{- flightsjson }}
+            </pre>
+        </div>
+    </section>
+{% endblock flights_block %}
