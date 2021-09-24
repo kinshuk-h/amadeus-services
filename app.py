@@ -22,7 +22,7 @@ def ssl_disabled_urlopen(endpoint):
     return urllib.request.urlopen(endpoint, context=context)
 
 app = flask.Flask(__name__)
-app.secret_key = uuid4().bytes
+app.secret_key = "Something dangerous..."
 client = amadeus.Client(http = ssl_disabled_urlopen)
 
 @app.template_filter()
